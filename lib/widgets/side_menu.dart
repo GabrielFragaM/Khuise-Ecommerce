@@ -76,7 +76,7 @@ class SideMenu extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Versão do Aplicativo: v1.0', style: TextStyle(fontSize: 11),
+                      'Versão do Aplicativo: v1.2', style: TextStyle(fontSize: 11),
                     )
                   ]
                 ),

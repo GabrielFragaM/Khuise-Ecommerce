@@ -1,5 +1,4 @@
 import 'dart:html';
-
 import 'package:lojas_khuise/constants/app_constants.dart';
 import 'package:lojas_khuise/pages/authentication/create_account.dart';
 import 'package:flutter/material.dart';
@@ -238,7 +237,6 @@ class _AuthenticationPageState extends State<AuthenticationPage>{
       try{
         final Storage _localStorage = window.localStorage;
         loginLocal(_localStorage['email'], _localStorage['password']);
-
         return Loading_Login();
       }catch(e){
         setState(() {

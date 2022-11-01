@@ -1,5 +1,6 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:lojas_khuise/constants/app_constants.dart';
 import 'dart:js' as js;
 import 'package:data_table_2/data_table_2.dart';
@@ -52,32 +53,58 @@ class OrderInfoScreenState extends State<OrderInfoScreen> {
         children: <Widget>[
           SizedBox(height: 20,),
           Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: Row(
-              children: [
-                Text(
-                  'Pedido:',
-                  style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.w500
+              padding: EdgeInsets.only(left: 20),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Pedido:',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500
+                        ),
+                        maxLines: 3,
+                      ),
+                      SizedBox(width: 5,),
+                      Text(
+                        '${_infoScreen.order.data()['orderNumber']}',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500
+                        ),
+                        maxLines: 3,
+                      ),
+                    ],
                   ),
-                  maxLines: 3,
-                ),
-                SizedBox(width: 5,),
-                Text(
-                  '${_infoScreen.order.data()['orderNumber'].toString().split('-')[0] +
-                      '-' +
-                      _infoScreen.order.data()['orderNumber'].toString().split('-')[1] +
-                      '-' +
-                      _infoScreen.order.data()['orderNumber'].toString().split('-')[2] + '...'}',
-                  style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.w500
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),),
+                  Row(
+                    children: [
+                      SizedBox(height: 25),
+                      Text(
+                        'Copiar código do pedido:',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500
+                        ),
+                        maxLines: 3,
+                      ),
+                      SizedBox(width: 5,),
+                      InkWell(
+                          onTap: () async {
+                            Clipboard.setData(ClipboardData(text: _infoScreen.order.data()['orderNumber']));
+                            const snackBar = SnackBar(
+                              backgroundColor: Colors.green,
+                              content: Text('Código do pedido copiado.'),
+                            );
+
+                            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          },
+                          child: Icon(Icons.copy, size: 20)
+                      )
+                    ],
+                  )
+                ],
+              )),
           DataTable2(
               showCheckboxColumn: false,
               columnSpacing: 10,
@@ -125,7 +152,7 @@ class OrderInfoScreenState extends State<OrderInfoScreen> {
                         DataCell(Container(
                           width: 80,
                           child: Text(
-                            '${_infoScreen.products.docs[index].data()['name'].toString()}',
+                            '${_infoScreen.products.docs[index].data()['name'].toString().toTitleCase()}',
                             style: TextStyle(
                                 fontSize: 12.0,
                                 fontWeight: FontWeight.w500
@@ -206,7 +233,7 @@ class OrderInfoScreenState extends State<OrderInfoScreen> {
                         DataCell(Container(
                           width: 50, //SET width
                           child: Text(
-                            '',
+                            'Total',
                             style: TextStyle(
                                 fontSize: 12.0,
                                 fontWeight: FontWeight.w500
@@ -216,17 +243,16 @@ class OrderInfoScreenState extends State<OrderInfoScreen> {
                         DataCell(Container(
                           width: 50, //SET width
                           child: Text(
-                            'Total',
+                            '+(Frete)',
                             style: TextStyle(
-                                fontSize: 12.0,
-                                fontWeight: FontWeight.w500
-                            ),
-                            maxLines: 3,
-                          ),)),
+                              fontSize: 11,
+                              color: Colors.black,
+
+                            ),),)),
                         DataCell(Container(
                           width: 80, //SET width
                           child: Text(
-                            'R\$ ${_infoScreen.order.data()['total'].toStringAsFixed(2)}',
+                            'R\$ ${(_infoScreen.order.data()['preco_entrega'] + _infoScreen.order.data()['total']).toStringAsFixed(2)}',
                             style: TextStyle(
                                 fontSize: 12.0,
                                 fontWeight: FontWeight.w500
@@ -445,42 +471,46 @@ class OrderInfoScreenState extends State<OrderInfoScreen> {
               ],
             ),
           ),
-          InkWell(
-            onTap: () async {
-              try{
-                await launch(_infoScreen.order.data()['urlPayment']);
-              }catch(e){
-                Map <String, dynamic> errorMap = {};
+          _infoScreen.order.data()['status'] == 0 ?
+          Padding(
+            padding: EdgeInsets.all(10),
+            child: InkWell(
+              onTap: () async {
+                try{
+                  await launch(_infoScreen.order.data()['urlPayment']);
+                }catch(e){
+                  Map <String, dynamic> errorMap = {};
 
-                errorMap['errorLaunch'] = e.toString();
+                  errorMap['errorLaunch'] = e.toString();
 
-                await FirebaseFirestore.instance.collection('logLink')
-                    .doc(_infoScreen.order.id).update(errorMap);
-              }
-              try{
-                js.context.callMethod('open', [_infoScreen.order.data()['urlPayment']]);
-              }catch(e){
-                Map <String, dynamic> errorMap = {};
+                  await FirebaseFirestore.instance.collection('logLink')
+                      .doc(_infoScreen.order.id).update(errorMap);
+                }
+                try{
+                  js.context.callMethod('open', [_infoScreen.order.data()['urlPayment']]);
+                }catch(e){
+                  Map <String, dynamic> errorMap = {};
 
-                errorMap['error'] = e.toString();
+                  errorMap['error'] = e.toString();
 
-                await FirebaseFirestore.instance.collection('logLink')
-                    .doc(_infoScreen.order.id).update(errorMap);
-              }
-            },
-            child: Container(
-              decoration: BoxDecoration(color: Colors.green,
-                  borderRadius: BorderRadius.circular(5)),
-              alignment: Alignment.center,
-              width: 130,
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: CustomText(
-                text: "Abrir Pagamento",
-                color: Colors.white,
-                size: 12,
+                  await FirebaseFirestore.instance.collection('logLink')
+                      .doc(_infoScreen.order.id).update(errorMap);
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(color: Colors.green,
+                    borderRadius: BorderRadius.circular(5)),
+                alignment: Alignment.center,
+                width: 130,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: CustomText(
+                  text: "Abrir Pagamento",
+                  color: Colors.white,
+                  size: 12,
+                ),
               ),
             ),
-          ),
+          ) : Container()
         ],
       ),
     );

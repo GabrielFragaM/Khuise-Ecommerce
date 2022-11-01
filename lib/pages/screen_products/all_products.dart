@@ -148,7 +148,7 @@ class All_Products_State extends State<All_Products> {
         stream: FirebaseFirestore.instance.collection('products')
             .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
+          if (!snapshot.hasData)
             return Loading_Products();
           else if(snapshot.data.docs.isNotEmpty)
             return ListView(
@@ -208,7 +208,7 @@ class All_Products_State extends State<All_Products> {
                                       padding: EdgeInsets.all(8),
                                       height: 50,
                                       child: CustomText(
-                                        text: "${item['name']}",
+                                        text: "${item['name'].toString().toTitleCase()}",
                                         color: Colors.black,
                                         size: 14,
                                       ),
@@ -228,7 +228,7 @@ class All_Products_State extends State<All_Products> {
                                               color: Colors.grey,
                                               fontSize: 14,
                                             ),
-                                            text: "${item['description']}"),
+                                            text: "${item['description'].toString().toCapitalized()}"),
                                       ),
                                     ),
                                   ),

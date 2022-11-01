@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:js' as js;
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
@@ -124,45 +123,20 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
             desc: 'Validando o seu pedido.',
           )..show();
 
-          List items = [];
-
-          for(Map item in cart){
-            items.add({
-              "title": item['name'],
-              "quantity": item['quantity'],
-              "unit_price": item['price'],
-            });
-          }
-
-          items.add(
+          List items = [
             {
-              "title": "Frete",
+              "title": 'Pedido Lojas Khuise\nRealizar Pagamento para finalizar a compra.',
               "quantity": 1,
-              "unit_price": preco_entrega,
-            }
-          );
+              "unit_price": resume['total'] + preco_entrega,
+            },
+          ];
 
-          final productKey = await getPaymentId(items);
-
-          Map<String, dynamic> logError = {
-            'order': productKey,
-            'error': 'log line 150 finish order',
-          };
-
-          try{
-            await FirebaseFirestore.instance.collection('log').add(logError);
-          }catch(e){
-            Map<String, dynamic> log = {
-              'order': 'Error catch line 156 finish order',
-              'error': e.toString(),
-            };
-            await FirebaseFirestore.instance.collection('log').add(log);
-          }
+          final mercadoPagoPayment = await getPaymentMercadoPago(items);
 
           Map<String, dynamic>order_info = {
             "payment_method": payment_method,
-            "orderNumber": jsonDecode(productKey)['id'],
-            "urlPayment": jsonDecode(productKey)['init_point'],
+            "orderNumber": mercadoPagoPayment['id'],
+            "urlPayment": mercadoPagoPayment['init_point'],
             "preco_entrega": preco_entrega,
             "confirmation": false,
             "status": 0,
@@ -184,20 +158,13 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
 
             await FirebaseFirestore.instance.collection('users').doc(auth.usuario.uid)
                 .collection('address').doc('address').set(_finish_order_screen.addres_user);
-            order_info = {
-              "orderNumber": jsonDecode(productKey)['id'],
-              "urlPayment": jsonDecode(productKey)['init_point'],
-              "status_text": "AGUARDANDO APROVAÇÃO",
-              "date": DateTime.now(),
-              "uid_user": auth.usuario.uid,
-            };
 
             await FirebaseFirestore.instance.collection('orders')
                 .doc(order_info['orderNumber']).set(order_info);
 
             Navigator.pop(context);
-           await launch(order_info['urlPayment']);
-            js.context.callMethod('open', [order_info['urlPayment']]);
+
+            await launch(order_info['urlPayment']);
 
            AwesomeDialog(
              context: context,
@@ -208,7 +175,6 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
              title: 'Pagamento',
              btnOkOnPress: () async {
                await launch(order_info['urlPayment']);
-               await js.context.callMethod('open', [order_info['urlPayment']]);
                Restart.restartApp();
              },
              desc: 'Aguardando pagamento...',
@@ -222,15 +188,8 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
               'error': e.toString()
             };
 
-            try{
-              await FirebaseFirestore.instance.collection('log').add(logError);
-            }catch(e){
-              Map<String, dynamic> log = {
-                'order': 'Error catch line 244 finish order',
-                'error': e.toString(),
-              };
-              await FirebaseFirestore.instance.collection('log').add(log);
-            }
+            await FirebaseFirestore.instance.collection('log').add(logError);
+
             Navigator.pop(context);
             AwesomeDialog(
               context: context,
@@ -560,15 +519,6 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
                         DataCell(Container(
                           width: 50, //SET width
                           child: Text(
-                            '+(Frete)',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.black,
-
-                            ),),)),
-                        DataCell(Container(
-                          width: 50, //SET width
-                          child: Text(
                             'Total',
                             style: TextStyle(
                               fontSize: 11,
@@ -580,7 +530,16 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
                         DataCell(Container(
                           width: 50, //SET width
                           child: Text(
-                            'R\$ ${resume['total'].toStringAsFixed(2)}',
+                            '+(Frete)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.black,
+
+                            ),),)),
+                        DataCell(Container(
+                          width: 50, //SET width
+                          child: Text(
+                            'R\$ ${(preco_entrega + resume['total']).toStringAsFixed(2)}',
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.black,

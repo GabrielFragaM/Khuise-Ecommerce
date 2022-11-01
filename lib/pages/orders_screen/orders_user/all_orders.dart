@@ -48,7 +48,7 @@ class OrdersUserScreenState extends State<OrdersUserScreen> {
         .doc(auth.usuario.uid).collection('orders').orderBy('date', descending: true)
         .snapshots(),
     builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (!snapshot.hasData) {
           return Scaffold(
             body: Container(
               padding: EdgeInsets.all(16.0),
@@ -84,37 +84,35 @@ class OrdersUserScreenState extends State<OrdersUserScreen> {
           );
         }
         else if(snapshot.data.docs.isEmpty || snapshot.data == null)
-            return Scaffold(
-              body: Container(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.stretch,
-                  mainAxisAlignment:
-                  MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.info_outline,
-                      size: 96.0,
-                      color: Colors.black,
-                    ),
-                    SizedBox(
-                      height: 16.0,
-                    ),
-                    Text(
-                      "Nenhum pedido encontrado.",
-                      style: TextStyle(
-                          fontSize: 22.0,
-                          color: Colors.black,
-                          fontWeight:
-                          FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(
-                      height: 16.0,
-                    ),
-                  ],
-                ),
+            return Container(
+              padding: EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.stretch,
+                mainAxisAlignment:
+                MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    Icons.info_outline,
+                    size: 96.0,
+                    color: Colors.black,
+                  ),
+                  SizedBox(
+                    height: 16.0,
+                  ),
+                  Text(
+                    "Nenhum pedido encontrado.",
+                    style: TextStyle(
+                        fontSize: 22.0,
+                        color: Colors.black,
+                        fontWeight:
+                        FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(
+                    height: 16.0,
+                  ),
+                ],
               ),
             );
           else
@@ -142,10 +140,10 @@ class OrdersUserScreenState extends State<OrdersUserScreen> {
                             );
 
                           },
-                          title: Text('Pedido: ${snapshot.data.docs[index]['orderNumber']}'),
+                          title: Text('Pedido: ${snapshot.data.docs[index]['orderNumber']}', style: TextStyle(fontSize: 14),),
                           subtitle: Text('Data da compra: ${date_format.format(DateTime.parse(snapshot.data.docs.toList()[index]['date'].toDate().toString()))}\n'
                               'Prazo de entrega: ${snapshot.data.docs[index]['tempo_entrega'] == 1 ? '1 a 2 dias' : '${snapshot.data.docs[index]['tempo_entrega']} dias'}\n'
-                              'Total: R\$ ${snapshot.data.docs[index]['total'].toStringAsFixed(2)}'
+                              'Total: R\$ ${(snapshot.data.docs[index]['preco_entrega'] + snapshot.data.docs[index]['total']).toStringAsFixed(2)}'
                       )
                   ),
                 )

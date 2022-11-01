@@ -1,11 +1,8 @@
 
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:lojas_khuise/constants/cart.dart';
 import 'package:flutter/material.dart';
-
+import 'package:lojas_khuise/constants/app_constants.dart';
 import 'package:smart_select/smart_select.dart';
 
 
@@ -33,7 +30,7 @@ class ProductState extends State<Product_Screen> {
     try{
       return Scaffold(
           appBar: AppBar(
-            title: Text('${_product_screen.product['name']}'),
+            title: Text('${_product_screen.product['name'].toString().toTitleCase()}'),
             centerTitle: true,
             elevation: 0.5,
             leading: IconButton(onPressed: (){
@@ -100,7 +97,7 @@ class ProductState extends State<Product_Screen> {
               Padding(
                 padding: EdgeInsets.only(left: 14.0, right: 16, top: 10),
                 child: Text(
-                  '${_product_screen.product['name']}',
+                  '${_product_screen.product['name'].toString().toTitleCase()}',
                   style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w500
@@ -114,7 +111,7 @@ class ProductState extends State<Product_Screen> {
                 child: Padding(
                   padding: EdgeInsets.only(left: 14.0, right: 16),
                   child: Text(
-                    "${_product_screen.product['description']}",
+                    "${_product_screen.product['description'].toString().toCapitalized()}",
                     style: TextStyle(
                         fontSize: 16,
                         color: Colors.white,
@@ -143,7 +140,7 @@ class ProductState extends State<Product_Screen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'A PARTIR DE: R\$ ${product_state['${_product_screen.product['uid']}']['price'].toStringAsFixed(2)}',
+                      'A PARTIR DE: R\$ ${_product_screen.product['price']}',
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500
