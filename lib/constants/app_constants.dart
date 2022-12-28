@@ -19,5 +19,4 @@ bool login_status = true;
 final DateFormat date_format = DateFormat('dd/MM/yyyy');
 var cep_formater = new MaskTextInputFormatter(mask: '#####-###', filter: { "#": RegExp(r'[0-9]') });
 
-var preco_entrega = null;
-var tempo_entrega = null;
+List deliveries = [];

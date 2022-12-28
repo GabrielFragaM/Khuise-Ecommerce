@@ -32,7 +32,9 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
 
   String observation = '';
   int payment_method = 0;
-
+  Map delivery = {
+    'price': 0
+  };
   bool payment_boleto = true;
   bool payment_card_credit = false;
   bool payment_pix = false;
@@ -127,21 +129,25 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
             {
               "title": 'Pedido Lojas Khuise\nRealizar Pagamento para finalizar a compra.',
               "quantity": 1,
-              "unit_price": resume['total'] + preco_entrega,
+              "unit_price": resume['total'] + delivery['price'],
             },
           ];
 
           final mercadoPagoPayment = await getPaymentMercadoPago(items);
-
+          if(mercadoPagoPayment['id'] == null){
+            mercadoPagoPayment['id'] = DateTime.now().millisecondsSinceEpoch.toString();
+          }
           Map<String, dynamic>order_info = {
             "payment_method": payment_method,
-            "orderNumber": mercadoPagoPayment['id'],
+            "orderNumberMercadoPago": mercadoPagoPayment['id'],
+            "orderNumber": DateTime.now().millisecondsSinceEpoch.toString(),
             "urlPayment": mercadoPagoPayment['init_point'],
-            "preco_entrega": preco_entrega,
+            "preco_entrega": delivery['price'],
             "confirmation": false,
             "status": 0,
             "status_text": "AGUARDANDO APROVAÇÃO",
-            "tempo_entrega": tempo_entrega,
+            "deliveryBy": delivery['name'],
+            "tempo_entrega": delivery['delivery_time'],
             "observation": observation == '' ? 'NaN' : observation,
             "total": resume['total'],
             "date": DateTime.now(),
@@ -359,20 +365,40 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
             child: Column(
               children: [
                 ListTile(
-                  title: Text('Entrega por Correios:'),
-                  leading: Icon(Icons.local_shipping_outlined),
-                  trailing: Icon(Icons.check_circle, color: Colors.pink,),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Preço: R\$ ${preco_entrega}', style: TextStyle(fontSize: 13),),
-                      Text('Tempo Estimado: ${tempo_entrega == 1 ? '1 a 2 dias' : '${tempo_entrega} dias'}', style: TextStyle(fontSize: 13),),
-                    ],
-                  ),
+                  title: Text('Fretes Disponíveis.'),
                 ),
               ],
             ),
           ),
+          for ( Map shipping in deliveries )
+            Padding(padding: EdgeInsets.only(left: 3),
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        delivery = shipping;
+                      });
+                      print(shipping['price'].runtimeType);
+                      print(shipping['delivery_time'].runtimeType);
+                    },
+                    child: ListTile(
+                      title: Text('Entrega via ' + shipping['name'] + ':'),
+                      leading: Icon(Icons.local_shipping_outlined),
+                      trailing: delivery == shipping ? Icon(Icons.check_circle, color: Colors.pink,)
+                          : Icon(Icons.circle_outlined),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Preço: R\$ ${shipping['price'].toString()}', style: TextStyle(fontSize: 13),),
+                          Text('Tempo Estimado: ${shipping['delivery_time'].toString()} dias', style: TextStyle(fontSize: 13),),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           DataTable2(
               showCheckboxColumn: false,
               columnSpacing: 20.0,
@@ -539,7 +565,7 @@ class Finish_Order_Screen_State extends State<Finish_Order_Screen> {
                         DataCell(Container(
                           width: 50, //SET width
                           child: Text(
-                            'R\$ ${(preco_entrega + resume['total']).toStringAsFixed(2)}',
+                            'R\$ ${(delivery['price'] + resume['total']).toStringAsFixed(2)}',
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.black,

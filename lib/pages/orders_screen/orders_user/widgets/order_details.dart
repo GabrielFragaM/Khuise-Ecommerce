@@ -386,7 +386,7 @@ class OrderInfoScreenState extends State<OrderInfoScreen> {
             child: Column(
               children: [
                 ListTile(
-                  title: Text('Entrega por Correios:'),
+                  title: Text('Entrega via ${_infoScreen.order.data()['deliveryBy']}:'),
                   leading: Icon(Icons.local_shipping_outlined),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

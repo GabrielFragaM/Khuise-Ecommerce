@@ -62,6 +62,70 @@ class Add_Address_State extends State<Add_Address> with Validator_Text{
     }
   }
 
+  Future<List>get_shippingMelhorEnvio(cep) async {
+    String token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImQzMGFiYTU0MDMyYzllODc0MmY0Mjk2ZGMzMmJhMTc0ODZiZTJmNzg4MjFiZjM1ZWYzNjAwODViNzJiZDBjMTMyMmU5MjllMDI2MmEwMTI2In0.eyJhdWQiOiIxIiwianRpIjoiZDMwYWJhNTQwMzJjOWU4NzQyZjQyOTZkYzMyYmExNzQ4NmJlMmY3ODgyMWJmMzVlZjM2MDA4NWI3MmJkMGMxMzIyZTkyOWUwMjYyYTAxMjYiLCJpYXQiOjE2Njg3NTA1ODIsIm5iZiI6MTY2ODc1MDU4MiwiZXhwIjoxNzAwMjg2NTgyLCJzdWIiOiJiOTQ1MDVlYy1mMDA0LTQ2ZmItYjBmZC04MGIxZGFiMWMwOTciLCJzY29wZXMiOlsiY2FydC1yZWFkIiwiY2FydC13cml0ZSIsImNvbXBhbmllcy1yZWFkIiwiY29tcGFuaWVzLXdyaXRlIiwiY291cG9ucy1yZWFkIiwiY291cG9ucy13cml0ZSIsIm5vdGlmaWNhdGlvbnMtcmVhZCIsIm9yZGVycy1yZWFkIiwicHJvZHVjdHMtcmVhZCIsInByb2R1Y3RzLWRlc3Ryb3kiLCJwcm9kdWN0cy13cml0ZSIsInB1cmNoYXNlcy1yZWFkIiwic2hpcHBpbmctY2FsY3VsYXRlIiwic2hpcHBpbmctY2FuY2VsIiwic2hpcHBpbmctY2hlY2tvdXQiLCJzaGlwcGluZy1jb21wYW5pZXMiLCJzaGlwcGluZy1nZW5lcmF0ZSIsInNoaXBwaW5nLXByZXZpZXciLCJzaGlwcGluZy1wcmludCIsInNoaXBwaW5nLXNoYXJlIiwic2hpcHBpbmctdHJhY2tpbmciLCJlY29tbWVyY2Utc2hpcHBpbmciLCJ0cmFuc2FjdGlvbnMtcmVhZCIsInVzZXJzLXJlYWQiLCJ1c2Vycy13cml0ZSIsIndlYmhvb2tzLXJlYWQiLCJ3ZWJob29rcy13cml0ZSIsInRkZWFsZXItd2ViaG9vayJdfQ.bq38rrFrg4NbwseRWFZUu0WW36pAW5nMu5F64c48QleRk5waxLqaaisaA71KEqm7OI7e8f5QF23W-yKpF7BkW6xQjRFBUMrY1efqvUc7eMc3gOg3t_Bhj0MaFSSggD25wSHDjOTiYF-ppkMqc5Pdj-7DuXSainVJ__5gFa8Z6bHwLFYdgXp85jG_75YQO7yrQvELvG_-P5ySZmVyQTRlFdCqGCNXj5hE1TppvXaW036YWj2FZkWyf_exBOo-OdWPW8vXg0wlVOLNBLk511r6vzFawZECEpPn_klGZ8xSqW5WaQYGDRrrl1y6jjl_BuwbvBeSLNXnkLw6sp9vTSkaKQ9qW5XGp5dbER6II-AzvtrOmfXFG_IiZZN186wl-MIsaHMz5RHzX3Tvz2cQx1K1zrSWWIAts7ZTbTJ1uGaq2HxmuAMRPiMsX2KBy3V7IcRFskv_SGGsAvKIdGNduvl_yqLq6O729OM-ZQpbJV32ZTCoGEko421OWdHIptZM-tfcHDFrbQNdXEbu9lgjt3EWHS-Lk6YYJbHC3lm3Vzt38iCoW9PYZl0OzBRAIE4KUHfMbnKKmfgLa7mSXfUAJCHgGtwmT1oSKzll8e1k6RIjgHt79TkhwOkGxAGqbQpViC_qFpzXJlxQy-HkT3lJHMGntkKgLBcm6NezFTKIokzvKFI';
+
+    try {
+      final url = 'https://melhorenvio.com.br/api/v2/me/shipment/calculate';
+
+      DocumentSnapshot shipping_info_store = await FirebaseFirestore.instance.collection('config').doc('shipping')
+          .get();
+
+      List products_send = [];
+      
+      for(var p in cart){
+        products_send.add({
+          "id": p['id'],
+          "width": shipping_info_store.data()['nVlLargura'],
+          "height": shipping_info_store.data()['nVlAltura'],
+          "length": shipping_info_store.data()['nVlComprimento'],
+          "weight": shipping_info_store.data()['nVlPeso'],
+          "insurance_value": 0,
+          "quantity": 1
+        });
+      }
+
+      var body = jsonEncode({
+        "from": {
+          "postal_code": shipping_info_store.data()['sCepOrigem']
+        },
+        "to": {
+          "postal_code": cep
+        },
+        "products": products_send,
+      });
+
+      var response = await http.post(
+          Uri.parse(url),
+          body: body,
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Access-Control_Allow_Origin": "*",
+            'Authorization': 'Bearer ' + token,
+            'User-Agent': 'Frete Lojas Khuise (gilvan_pereira.catu@hotmail.com)'
+          },
+          encoding: Encoding.getByName("utf-8")
+      );
+
+      List servicesDeliveries = [];
+
+      for(var service in json.decode(response.body)){
+        if(!service.containsKey('error') && service['name'] != 'AmanhÃ£' && service['name'] != 'Ã©FÃ¡cil' && service['name'] != 'RodoviÃ¡rio'){
+          servicesDeliveries.add({
+            'id': service['id'],
+            'name': service['name'],
+            'price': num.parse(service['price']),
+            'delivery_time': service['delivery_time'],
+          });
+        }
+      }
+    print(servicesDeliveries);
+      return servicesDeliveries;
+    }catch(e){
+    }
+  }
+
   String date_confirm;
   String cep = '';
   String endereco = '';
@@ -98,7 +162,7 @@ class Add_Address_State extends State<Add_Address> with Validator_Text{
       ),
       floatingActionButton: InkWell(
         onTap: () async {
-          if(cep == '' || numero == '' || preco_entrega == null || tempo_entrega == null){
+          if(cep == '' || numero == '' || deliveries == []){
             AwesomeDialog(
               context: context,
               animType: AnimType.SCALE,
@@ -195,7 +259,7 @@ class Add_Address_State extends State<Add_Address> with Validator_Text{
 
 
 
-                    var _shipping = await get_shipping(cepValorTemp);
+                    List shipping = await get_shippingMelhorEnvio(cepValorTemp);
 
                     Navigator.pop(context);
 
@@ -207,9 +271,7 @@ class Add_Address_State extends State<Add_Address> with Validator_Text{
                     ScaffoldMessenger.of(context).showSnackBar(finish_api_shipping);
 
                     setState(() {
-                      preco_entrega = _shipping['price'];
-                      resume['total'] = _shipping['price'] + resume['total'];
-                      tempo_entrega = _shipping['delivery_time'];
+                      deliveries = shipping;
                     });
                   }
 
